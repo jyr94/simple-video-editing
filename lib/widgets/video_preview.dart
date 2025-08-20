@@ -7,9 +7,17 @@ class VideoPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return VideoEditor(
-      controller: controller,
-      child: CoverViewer(controller: controller),
+    // VideoEditor menyediakan VideoViewer untuk playback
+    return Container(
+      color: Colors.black,
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: controller.video.value.aspectRatio == 0
+              ? 16 / 9
+              : controller.video.value.aspectRatio,
+          child: const VideoViewer(), // dari package video_editor
+        ),
+      ),
     );
   }
 }

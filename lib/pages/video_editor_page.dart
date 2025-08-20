@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../bloc/video_editor_bloc.dart';
 import '../bloc/video_editor_event.dart';
 import '../bloc/video_editor_state.dart';
@@ -16,8 +17,9 @@ class VideoEditorPage extends StatelessWidget {
       body: BlocConsumer<VideoEditorBloc, VideoEditorState>(
         listener: (context, state) {
           if (state is VideoError) {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text(state.message)));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
           }
         },
         builder: (context, state) {
@@ -25,30 +27,34 @@ class VideoEditorPage extends StatelessWidget {
             return Center(
               child: ElevatedButton(
                 onPressed: () {
+                  // TODO: ganti ke path nyata dari picker
                   const path = '/path/to/video.mp4';
                   context.read<VideoEditorBloc>().add(LoadVideo(path));
                 },
                 child: const Text('Pick Video'),
               ),
             );
-          } else if (state is VideoLoading) {
+          }
+
+          if (state is VideoLoading || state is VideoEditing) {
             return const Center(child: CircularProgressIndicator());
-          } else if (state is VideoLoaded) {
+          }
+
+          if (state is VideoLoaded) {
             return Column(
               children: [
                 Expanded(child: VideoPreview(controller: state.controller)),
                 EditingControls(controller: state.controller),
               ],
             );
-          } else if (state is VideoEditing || state is VideoExporting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is VideoExported) {
-            return Center(
-              child: Text('Video saved: ${state.outputPath}'),
-            );
-          } else {
-            return const SizedBox.shrink();
           }
+
+          // Error & fallback
+          if (state is VideoError) {
+            return Center(child: Text(state.message));
+          }
+
+          return const SizedBox.shrink();
         },
       ),
     );
