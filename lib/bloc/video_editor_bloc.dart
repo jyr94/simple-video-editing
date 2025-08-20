@@ -52,10 +52,7 @@ class VideoEditorBloc extends Bloc<VideoEditorEvent, VideoEditorState> {
 
     try {
       // Set posisi trim di controller video_editor (BUKAN VideoPlayerController)
-      currentState.controller.updateTrim(
-        start: event.start,
-        end: event.end,
-      );
+      currentState.controller.updateTrim(event.start, event.end);
 
       // Balik ke state loaded (controller sudah ter-update)
       emit(VideoLoaded(currentState.controller));
