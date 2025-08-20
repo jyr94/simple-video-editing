@@ -51,11 +51,15 @@ class VideoEditorBloc extends Bloc<VideoEditorEvent, VideoEditorState> {
     emit(VideoEditing());
 
     try {
-      // Set posisi trim di controller video_editor (BUKAN VideoPlayerController)
-      currentState.controller.updateTrim(event.start, event.end);
+      // Set posisi trim di controller video_editor menggunakan rasio (0 - 1)
+      final controller = currentState.controller;
+      final duration = controller.videoDuration.inMilliseconds.toDouble();
+      final start = event.start.inMilliseconds / duration;
+      final end = event.end.inMilliseconds / duration;
+      controller.updateTrim(start, end);
 
       // Balik ke state loaded (controller sudah ter-update)
-      emit(VideoLoaded(currentState.controller));
+      emit(VideoLoaded(controller));
     } catch (e) {
       emit(VideoError('Failed to trim video: $e'));
     }
