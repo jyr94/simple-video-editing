@@ -27,9 +27,9 @@ class VideoEditorBloc extends Bloc<VideoEditorEvent, VideoEditorState> {
 
       final controller = VideoEditorController.file(
         File(event.path),
-        // opsional: atur batas durasi trim
-        // minDuration: const Duration(seconds: 1),
-        // maxDuration: const Duration(seconds: 30),
+        // set explicit trim range to satisfy controller assertions
+        minDuration: const Duration(seconds: 1),
+        maxDuration: const Duration(minutes: 1),
       );
 
       await controller.initialize();
