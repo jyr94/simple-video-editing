@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_player/video_player.dart';
 
 class VideoPreview extends StatelessWidget {
   final VideoEditorController controller;
@@ -15,7 +16,7 @@ class VideoPreview extends StatelessWidget {
           aspectRatio: controller.video.value.aspectRatio == 0
               ? 16 / 9
               : controller.video.value.aspectRatio,
-          child: const VideoViewer(), // dari package video_editor
+          child: VideoPlayer(controller.video),
         ),
       ),
     );

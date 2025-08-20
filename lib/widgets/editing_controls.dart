@@ -24,8 +24,6 @@ class EditingControls extends StatelessWidget {
             child: TrimSlider(
               controller: controller,
               height: 48,
-              onChangeStart: (s) {},
-              onChangeEnd: (s) {},
             ),
           ),
 
