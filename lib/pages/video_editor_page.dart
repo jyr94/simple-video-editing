@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../bloc/video_editor_bloc.dart';
 import '../bloc/video_editor_event.dart';
@@ -26,10 +27,14 @@ class VideoEditorPage extends StatelessWidget {
           if (state is VideoInitial) {
             return Center(
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: ganti ke path nyata dari picker
-                  const path = '/path/to/video.mp4';
-                  context.read<VideoEditorBloc>().add(LoadVideo(path));
+                onPressed: () async {
+                  final picker = ImagePicker();
+                  final XFile? file =
+                      await picker.pickVideo(source: ImageSource.gallery);
+                  if (file != null) {
+                    // ignore: use_build_context_synchronously
+                    context.read<VideoEditorBloc>().add(LoadVideo(file.path));
+                  }
                 },
                 child: const Text('Pick Video'),
               ),
