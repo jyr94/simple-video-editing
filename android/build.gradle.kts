@@ -1,21 +1,19 @@
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+// android/build.gradle.kts (root project)
 
-val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
-rootProject.layout.buildDirectory.value(newBuildDir)
+import org.gradle.api.file.Directory
 
+// Tentukan root build folder sekali (TIDAK dari buildDirectory)
+val buildRoot: Directory = rootProject.layout.projectDirectory.dir("../build")
+
+// Root project build (opsional)
+rootProject.layout.buildDirectory.set(buildRoot.dir("root"))
+
+// Semua subproject build ke ../build/<nama-subproject>
 subprojects {
-    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
-    project.layout.buildDirectory.value(newSubprojectBuildDir)
-}
-subprojects {
-    project.evaluationDependsOn(":app")
+    layout.buildDirectory.set(buildRoot.dir(name))
 }
 
+// Clean task
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

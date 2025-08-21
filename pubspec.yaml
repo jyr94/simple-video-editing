@@ -36,13 +36,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   equatable: ^2.0.5
     
-  bloc: ^8.1.0
-  flutter_bloc: ^8.1.0
+  bloc: ^9.0.0
+  flutter_bloc: ^9.1.1
   video_editor: ^3.0.0
   image_picker: ^1.0.4
   video_player: ^2.8.1
-  file_picker: ^5.2.10
-  ffmpeg_kit_flutter_full_gpl: ^4.5.1
+  file_picker: ^10.3.2
+  ffmpeg_kit_flutter_full_gpl: ^6.0.3
 
 dev_dependencies:
   flutter_test:
