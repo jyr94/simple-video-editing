@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:bloc/bloc.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_player/video_player.dart';
 
 import 'video_editor_event.dart';
 import 'video_editor_state.dart';
@@ -25,11 +26,22 @@ class VideoEditorBloc extends Bloc<VideoEditorEvent, VideoEditorState> {
         await _controller!.dispose();
       }
 
+      // Determine the actual video duration first to avoid assertion errors
+      // when the selected clip is shorter than the provided minDuration.
+      final videoFile = File(event.path);
+      final probe = VideoPlayerController.file(videoFile);
+      await probe.initialize();
+      final videoDuration = probe.value.duration;
+      await probe.dispose();
+
+      const minDuration = Duration(milliseconds: 1);
+      final maxDuration =
+          videoDuration > minDuration ? videoDuration : minDuration * 2;
+
       final controller = VideoEditorController.file(
-        File(event.path),
-        // set explicit trim range to satisfy controller assertions
-        minDuration: const Duration(seconds: 1),
-        maxDuration: const Duration(minutes: 1),
+        videoFile,
+        minDuration: minDuration,
+        maxDuration: maxDuration,
       );
 
       await controller.initialize();
