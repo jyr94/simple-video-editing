@@ -11,10 +11,29 @@ import '../widgets/editing_controls.dart';
 class VideoEditorPage extends StatelessWidget {
   const VideoEditorPage({super.key});
 
+  Future<void> _pickVideo(BuildContext context) async {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickVideo(source: ImageSource.gallery);
+    if (file != null) {
+      // ignore: use_build_context_synchronously
+      context.read<VideoEditorBloc>().add(LoadVideo(file.path));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Video Editor')),
+      appBar: AppBar(
+        title: const Text('Video Editor'),
+        backgroundColor: Colors.grey[900],
+        actions: [
+          IconButton(
+            tooltip: 'Open Video',
+            icon: const Icon(Icons.folder_open),
+            onPressed: () => _pickVideo(context),
+          ),
+        ],
+      ),
       body: BlocConsumer<VideoEditorBloc, VideoEditorState>(
         listener: (context, state) {
           if (state is VideoError) {
@@ -26,17 +45,10 @@ class VideoEditorPage extends StatelessWidget {
         builder: (context, state) {
           if (state is VideoInitial) {
             return Center(
-              child: ElevatedButton(
-                onPressed: () async {
-                  final picker = ImagePicker();
-                  final XFile? file =
-                      await picker.pickVideo(source: ImageSource.gallery);
-                  if (file != null) {
-                    // ignore: use_build_context_synchronously
-                    context.read<VideoEditorBloc>().add(LoadVideo(file.path));
-                  }
-                },
-                child: const Text('Pick Video'),
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.video_library),
+                label: const Text('Import Video'),
+                onPressed: () => _pickVideo(context),
               ),
             );
           }
@@ -48,7 +60,18 @@ class VideoEditorPage extends StatelessWidget {
           if (state is VideoLoaded) {
             return Column(
               children: [
-                Expanded(child: VideoPreview(controller: state.controller)),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black,
+                        border: Border.all(color: Colors.grey.shade800),
+                      ),
+                      child: VideoPreview(controller: state.controller),
+                    ),
+                  ),
+                ),
                 EditingControls(controller: state.controller),
               ],
             );

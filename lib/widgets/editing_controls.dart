@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_editor/video_editor.dart';
+import 'package:video_player/video_player.dart';
 
 import '../bloc/video_editor_bloc.dart';
 import '../bloc/video_editor_event.dart';
@@ -15,66 +16,96 @@ class EditingControls extends StatelessWidget {
 
     return SafeArea(
       top: false,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Slider trim bawaan package
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: TrimSlider(
-              controller: controller,
-              height: 48,
+      child: Container(
+        color: Colors.grey[900],
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ValueListenableBuilder<VideoPlayerValue>(
+              valueListenable: controller.video,
+              builder: (context, value, child) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        value.isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        value.isPlaying
+                            ? controller.video.pause()
+                            : controller.video.play();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.replay, color: Colors.white),
+                      onPressed: () => controller.video.seekTo(Duration.zero),
+                    ),
+                  ],
+                );
+              },
             ),
-          ),
 
-          // Info kecil
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(
-              'Duration: ${duration.inSeconds}s | '
-              'Trim: ${controller.startTrim.inSeconds}s - ${controller.endTrim.inSeconds}s',
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-
-          // Tombol contoh set trim cepat
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FilledButton(
-                onPressed: () {
-                  // Contoh: set 0s - 5s
-                  context.read<VideoEditorBloc>().add(
-                        TrimVideo(
-                          start: const Duration(seconds: 0),
-                          end: const Duration(seconds: 5),
-                        ),
-                      );
-                },
-                child: const Text('Trim 0s–5s'),
+            // Slider trim bawaan package
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: TrimSlider(
+                controller: controller,
+                height: 48,
               ),
-              const SizedBox(width: 12),
-              FilledButton.tonal(
-                onPressed: () {
-                  // Contoh: set 5s – 10s (dibatasi oleh total durasi)
-                  final end =
-                      duration.inSeconds >= 10 ? 10 : duration.inSeconds;
-                  if (end > 5) {
+            ),
+
+            // Info kecil
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Duration: ${duration.inSeconds}s | '
+                'Trim: ${controller.startTrim.inSeconds}s - ${controller.endTrim.inSeconds}s',
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ),
+
+            // Tombol contoh set trim cepat
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FilledButton.icon(
+                  onPressed: () {
                     context.read<VideoEditorBloc>().add(
                           TrimVideo(
-                            start: const Duration(seconds: 5),
-                            end: Duration(seconds: end),
+                            start: const Duration(seconds: 0),
+                            end: const Duration(seconds: 5),
                           ),
                         );
-                  }
-                },
-                child: const Text('Trim 5s–10s'),
-              ),
-            ],
-          ),
+                  },
+                  icon: const Icon(Icons.content_cut),
+                  label: const Text('0–5s'),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: () {
+                    final end =
+                        duration.inSeconds >= 10 ? 10 : duration.inSeconds;
+                    if (end > 5) {
+                      context.read<VideoEditorBloc>().add(
+                            TrimVideo(
+                              start: const Duration(seconds: 5),
+                              end: Duration(seconds: end),
+                            ),
+                          );
+                    }
+                  },
+                  icon: const Icon(Icons.content_cut),
+                  label: const Text('5–10s'),
+                ),
+              ],
+            ),
 
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
