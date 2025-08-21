@@ -1,8 +1,14 @@
 plugins {
     id("com.android.application") version "8.6.0"
     id("org.jetbrains.kotlin.android") version "2.1.0"
-    // HARUS setelah Android & Kotlin
+    // Flutter plugin harus setelah Android & Kotlin
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+repositories {
+    google()
+    mavenCentral()
+    maven(url = "https://storage.googleapis.com/download.flutter.io")
 }
 
 android {
@@ -33,7 +39,10 @@ android {
 }
 
 dependencies {
-    implementation("io.flutter:flutter_embedding_debug:ea121f8859e4b13e47a8f845e4586164519588bc")
+    // TEMPORER untuk unblocking: samakan hash dengan ABI yang muncul di dependency graph kamu
+    debugImplementation("io.flutter:flutter_embedding_debug:1.0.0-1e9a811bf8e70466596bcf0ea3a8b5adb5f17f7f")
+    profileImplementation("io.flutter:flutter_embedding_profile:1.0.0-1e9a811bf8e70466596bcf0ea3a8b5adb5f17f7f")
+    releaseImplementation("io.flutter:flutter_embedding_release:1.0.0-1e9a811bf8e70466596bcf0ea3a8b5adb5f17f7f")
 }
 
 flutter { source = "../.." }

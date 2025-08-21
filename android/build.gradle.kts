@@ -13,6 +13,13 @@ subprojects {
     layout.buildDirectory.set(buildRoot.dir(name))
 }
 
+subprojects {
+    repositories {
+        google()
+        mavenCentral()
+        maven(url = "https://storage.googleapis.com/download.flutter.io")
+    }
+}
 // Clean task
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
