@@ -1,10 +1,17 @@
 # simple_video_editing
 
-A new Flutter project.
+A simple Flutter video editor that can merge multiple clips with basic fade
+transitions and export the final video using FFmpeg.
+
+## Features
+- Import multiple videos from the device
+- Set a fade or hard cut transition between clips
+- Export the combined video to an mp4 file
+
+This project is a starting point for experimenting with simple video editing
+workflows in Flutter.
 
 ## Getting Started
-
-This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:
 

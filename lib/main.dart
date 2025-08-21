@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'bloc/video_editor_bloc.dart';
-import 'pages/video_editor_page.dart';
+import 'pages/multi_video_editor_page.dart';
 
 void main() {
-  runApp(
-    BlocProvider(
-      create: (_) => VideoEditorBloc(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -27,7 +20,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.black,
         useMaterial3: true,
       ),
-      home: const VideoEditorPage(),
+      home: const MultiVideoEditorPage(),
     );
   }
 }
