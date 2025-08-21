@@ -1,5 +1,5 @@
 plugins {
-    id("com.android.application") version "8.5.2"
+    id("com.android.application") version "8.6.0"
     id("org.jetbrains.kotlin.android") version "2.1.0"
     // HARUS setelah Android & Kotlin
     id("dev.flutter.flutter-gradle-plugin")
