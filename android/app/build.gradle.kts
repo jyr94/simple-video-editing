@@ -1,31 +1,30 @@
 plugins {
-    id("com.android.application") version "8.6.0"
-    id("org.jetbrains.kotlin.android") version "2.1.0"
-    // Flutter plugin harus setelah Android & Kotlin
+    id("com.android.application")
+    id("kotlin-android")
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-}
-
-repositories {
-    google()
-    mavenCentral()
-    maven(url = "https://storage.googleapis.com/download.flutter.io")
 }
 
 android {
     namespace = "com.example.simple_video_editing"
-
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.2.12479018"
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "17" }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
 
     defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.simple_video_editing"
-        minSdk = maxOf(24, flutter.minSdkVersion)
+        // You can update the following values to match your application needs.
+        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -33,16 +32,13 @@ android {
 
     buildTypes {
         release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
 
-dependencies {
-    // TEMPORER untuk unblocking: samakan hash dengan ABI yang muncul di dependency graph kamu
-    debugImplementation("io.flutter:flutter_embedding_debug:1.0.0-1e9a811bf8e70466596bcf0ea3a8b5adb5f17f7f")
-    profileImplementation("io.flutter:flutter_embedding_profile:1.0.0-1e9a811bf8e70466596bcf0ea3a8b5adb5f17f7f")
-    releaseImplementation("io.flutter:flutter_embedding_release:1.0.0-1e9a811bf8e70466596bcf0ea3a8b5adb5f17f7f")
+flutter {
+    source = "../.."
 }
-
-flutter { source = "../.." }

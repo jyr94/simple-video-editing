@@ -1,26 +1,31 @@
-// android/build.gradle.kts (root project)
-
 import org.gradle.api.file.Directory
 
-// Tentukan root build folder sekali (TIDAK dari buildDirectory)
+// (Opsional) Pindahkan output build ke ../build/<subproject>
 val buildRoot: Directory = rootProject.layout.projectDirectory.dir("../build")
-
-// Root project build (opsional)
 rootProject.layout.buildDirectory.set(buildRoot.dir("root"))
 
-// Semua subproject build ke ../build/<nama-subproject>
 subprojects {
+    // setiap subproject build ke ../build/<nama-subproject>
     layout.buildDirectory.set(buildRoot.dir(name))
-}
 
-subprojects {
+    // Paksa versi FFmpegKit ke 6.0-1
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.arthenica" && requested.name.startsWith("ffmpeg-kit-")) {
+                useVersion("6.0-1") // ganti ke "6.0" kalau 6.0-1 masih 404
+            }
+        }
+    }
+
+    // Repos — termasuk Flutter GCS agar artefak Flutter/engine ketemu
     repositories {
         google()
         mavenCentral()
         maven(url = "https://storage.googleapis.com/download.flutter.io")
     }
 }
-// Clean task
+
+// Clean
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

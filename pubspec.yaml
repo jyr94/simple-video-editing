@@ -42,8 +42,8 @@ dependencies:
   image_picker: ^1.0.4
   video_player: ^2.8.1
   file_picker: ^10.3.2
-  ffmpeg_kit_flutter_full_gpl: ^6.0.3
-
+  ffmpeg_kit_flutter_new: ^3.2.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
