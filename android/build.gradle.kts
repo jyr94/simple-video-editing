@@ -8,11 +8,13 @@ subprojects {
     // setiap subproject build ke ../build/<nama-subproject>
     layout.buildDirectory.set(buildRoot.dir(name))
 
-    // Paksa versi FFmpegKit ke 6.0-1
+    // Ensure FFmpegKit matches the version bundled with ffmpeg_kit_flutter_new
     configurations.all {
         resolutionStrategy.eachDependency {
             if (requested.group == "com.arthenica" && requested.name.startsWith("ffmpeg-kit-")) {
-                useVersion("6.0-1") // ganti ke "6.0" kalau 6.0-1 masih 404
+                // Plugin ffmpeg_kit_flutter_new 3.2.0 currently ships with FFmpegKit 6.0
+                // Update this pin when upgrading the plugin to avoid using outdated binaries
+                useVersion("6.0")
             }
         }
     }
