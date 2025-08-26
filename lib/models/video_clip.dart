@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 
 enum TransitionType { none, fade }
@@ -5,11 +7,13 @@ enum TransitionType { none, fade }
 class VideoClip {
   final String path;
   final Duration duration;
+  final Uint8List? thumbnail;
   TransitionType transition;
 
   VideoClip({
     required this.path,
     required this.duration,
+    this.thumbnail,
     this.transition = TransitionType.fade,
   });
 }
