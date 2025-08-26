@@ -14,6 +14,8 @@ class VideoClip {
   final ClipType type;
   final String? text;
   TransitionType transition;
+  Duration start;
+  Duration end;
 
   VideoClip({
     this.path,
@@ -23,5 +25,8 @@ class VideoClip {
     this.type = ClipType.video,
     this.text,
     this.transition = TransitionType.none,
-  });
+    Duration? start,
+    Duration? end,
+  })  : start = start ?? Duration.zero,
+        end = end ?? duration;
 }

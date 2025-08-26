@@ -4,12 +4,14 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
+import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../models/video_clip.dart';
 import '../widgets/transition_selector.dart';
 import '../widgets/timeline_clip.dart';
+import '../widgets/video_preview.dart';
 
 class MultiVideoEditorPage extends StatefulWidget {
   const MultiVideoEditorPage({super.key});
@@ -21,19 +23,11 @@ class MultiVideoEditorPage extends StatefulWidget {
 class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   final List<List<VideoClip>> _tracks = [[]];
   bool _isExporting = false;
-  VideoPlayerController? _previewController;
+  VideoEditorController? _previewController;
   int _selectedTrack = 0;
   int _selectedIndex = 0;
-  double _previewScale = 1.0;
 
   bool get _hasAnyClip => _tracks.any((t) => t.isNotEmpty);
-
-  String _format(Duration d) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    final minutes = two(d.inMinutes.remainder(60));
-    final seconds = two(d.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
 
   Future<Uint8List?> _generateWaveform(String path) async {
     final wavePath =
@@ -155,8 +149,31 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       setState(() {});
       return;
     }
-    _previewController = VideoPlayerController.file(File(clip.path!));
-    await _previewController!.initialize();
+    final file = File(clip.path!);
+    final probe = VideoPlayerController.file(file);
+    await probe.initialize();
+    final videoDuration = probe.value.duration;
+    await probe.dispose();
+    const minDuration = Duration(milliseconds: 1);
+    final maxDuration =
+        videoDuration > minDuration ? videoDuration : minDuration * 2;
+    final controller = VideoEditorController.file(
+      file,
+      minDuration: minDuration,
+      maxDuration: maxDuration,
+    );
+    await controller.initialize();
+    controller.updateTrim(
+      clip.start.inMilliseconds / clip.duration.inMilliseconds,
+      clip.end.inMilliseconds / clip.duration.inMilliseconds,
+    );
+    controller.addListener(() {
+      setState(() {
+        clip.start = controller.startTrim;
+        clip.end = controller.endTrim;
+      });
+    });
+    _previewController = controller;
     setState(() {});
   }
 
@@ -270,7 +287,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     if (_tracks[_selectedTrack].isEmpty || _previewController == null) return;
     final clip = _tracks[_selectedTrack][_selectedIndex];
     if (clip.type != ClipType.video || clip.path == null) return;
-    final position = _previewController!.value.position;
+    final position = _previewController!.video.value.position;
     if (position <= Duration.zero || position >= clip.duration) return;
 
     final tmp = Directory.systemTemp.path;
@@ -385,119 +402,9 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                 Expanded(
                   child: Center(
                     child: _previewController == null ||
-                            !_previewController!.value.isInitialized
+                            !_previewController!.initialized
                         ? const Text('No clip selected')
-                        : LayoutBuilder(
-                            builder: (context, constraints) {
-                              final controller = _previewController!;
-                              return ValueListenableBuilder<VideoPlayerValue>(
-                                valueListenable: controller,
-                                builder: (context, value, child) {
-                                  final duration = value.duration;
-                                  final position = value.position;
-                                  final width = constraints.maxWidth;
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      value.isPlaying
-                                          ? controller.pause()
-                                          : controller.play();
-                                    },
-                                    onHorizontalDragUpdate: (details) {
-                                      final relative = details.delta.dx / width;
-                                      final newPosition = position.inMilliseconds +
-                                          duration.inMilliseconds * relative;
-                                      final clamped = newPosition.clamp(
-                                        0,
-                                        duration.inMilliseconds.toDouble(),
-                                      );
-                                      controller.seekTo(
-                                        Duration(milliseconds: clamped.toInt()),
-                                      );
-                                    },
-                                    onScaleUpdate: (details) {
-                                      setState(() {
-                                        _previewScale =
-                                            details.scale.clamp(1.0, 5.0);
-                                      });
-                                    },
-                                    child: Stack(
-                                      children: [
-                                        Center(
-                                          child: AspectRatio(
-                                            aspectRatio: value.aspectRatio,
-                                            child: Transform.scale(
-                                              scale: _previewScale,
-                                              child: VideoPlayer(controller),
-                                            ),
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 8,
-                                          left: 8,
-                                          child: Icon(
-                                            value.isPlaying
-                                                ? Icons.pause_circle
-                                                : Icons.play_circle,
-                                            size: 48,
-                                            color: Colors.white70,
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 0,
-                                          left: 0,
-                                          right: 0,
-                                          child: Column(
-                                            children: [
-                                              Slider(
-                                                value: position
-                                                    .inMilliseconds
-                                                    .toDouble(),
-                                                min: 0,
-                                                max: duration.inMilliseconds
-                                                    .toDouble(),
-                                                onChanged: (v) => controller
-                                                    .seekTo(Duration(
-                                                        milliseconds: v
-                                                            .toInt())),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    bottom: 4),
-                                                child: Text(
-                                                  '${_format(position)} / ${_format(duration)}',
-                                                  style: const TextStyle(
-                                                      color: Colors.white),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 28,
-                                          left: 0,
-                                          child: Container(
-                                            width: 4,
-                                            height: 20,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        Positioned(
-                                          bottom: 28,
-                                          right: 0,
-                                          child: Container(
-                                            width: 4,
-                                            height: 20,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
+                        : VideoPreview(controller: _previewController!),
                   ),
                 ),
                 SizedBox(
@@ -529,14 +436,24 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                     ],
                   ),
                 ),
+                if (_previewController != null &&
+                    _previewController!.initialized)
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: TrimSlider(
+                      controller: _previewController!,
+                      height: 48,
+                    ),
+                  ),
                 SafeArea(
                   child: Row(
                     children: [
                       if (_previewController != null &&
-                          _previewController!.value.isInitialized)
+                          _previewController!.initialized)
                         Expanded(
                           child: ValueListenableBuilder<VideoPlayerValue>(
-                            valueListenable: _previewController!,
+                            valueListenable: _previewController!.video,
                             builder: (context, value, child) {
                               final max =
                                   value.duration.inMilliseconds.toDouble();
@@ -547,9 +464,10 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                                 min: 0,
                                 max: max,
                                 value: pos,
-                                onChanged: (v) => _previewController!.seekTo(
-                                  Duration(milliseconds: v.toInt()),
-                                ),
+                                onChanged: (v) => _previewController!.video
+                                    .seekTo(
+                                      Duration(milliseconds: v.toInt()),
+                                    ),
                               );
                             },
                           ),
