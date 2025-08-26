@@ -6,7 +6,6 @@ import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../models/video_clip.dart';
 import '../widgets/transition_selector.dart';
@@ -48,25 +47,21 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       allowMultiple: true,
     );
     if (result != null) {
+      var insertIndex = _tracks[0].isEmpty ? 0 : 1;
       for (final file in result.files) {
         final controller = VideoPlayerController.file(File(file.path!));
         await controller.initialize();
-        final Uint8List? thumb = await VideoThumbnail.thumbnailData(
-          video: file.path!,
-          imageFormat: ImageFormat.PNG,
-          maxWidth: 120,
-          quality: 75,
-        );
         final wave = await _generateWaveform(file.path!);
-        _tracks[0].add(
+        _tracks[0].insert(
+          insertIndex,
           VideoClip(
             path: file.path!,
             duration: controller.value.duration,
-            thumbnail: thumb,
             waveform: wave,
             type: ClipType.video,
           ),
         );
+        insertIndex++;
         await controller.dispose();
       }
       _selectedTrack = 0;
@@ -185,7 +180,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
 
   Widget _buildDraggableClip(int track, int index) {
     final clip = _tracks[track][index];
-    return LongPressDraggable<Map<String, int>>(
+    return Draggable<Map<String, int>>(
       data: {'track': track, 'index': index},
       dragAnchorStrategy: pointerDragAnchorStrategy,
       feedback: Material(
@@ -304,32 +299,18 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     await FFmpegKit.execute(firstCmd);
     await FFmpegKit.execute(secondCmd);
 
-    final thumb1 = await VideoThumbnail.thumbnailData(
-      video: firstPath,
-      imageFormat: ImageFormat.PNG,
-      maxWidth: 120,
-      quality: 75,
-    );
-    final thumb2 = await VideoThumbnail.thumbnailData(
-      video: secondPath,
-      imageFormat: ImageFormat.PNG,
-      maxWidth: 120,
-      quality: 75,
-    );
     final wave1 = await _generateWaveform(firstPath);
     final wave2 = await _generateWaveform(secondPath);
 
     final clip1 = VideoClip(
       path: firstPath,
       duration: position,
-      thumbnail: thumb1,
       waveform: wave1,
       type: ClipType.video,
     );
     final clip2 = VideoClip(
       path: secondPath,
       duration: clip.duration - position,
-      thumbnail: thumb2,
       waveform: wave2,
       type: ClipType.video,
     );
