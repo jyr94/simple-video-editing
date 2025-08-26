@@ -41,19 +41,17 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     return null;
   }
 
-  Future<void> _addVideos({int? insertIndex}) async {
+  Future<void> _addVideos() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.video,
       allowMultiple: true,
     );
     if (result != null) {
-      var index = insertIndex ?? (_clips.isEmpty ? 0 : _selectedIndex + 1);
       for (final file in result.files) {
         final controller = VideoPlayerController.file(File(file.path!));
         await controller.initialize();
         final wave = await _generateWaveform(file.path!);
-        _clips.insert(
-          index,
+        _clips.add(
           VideoClip(
             path: file.path!,
             duration: controller.value.duration,
@@ -61,10 +59,9 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
             type: ClipType.video,
           ),
         );
-        index++;
         await controller.dispose();
       }
-      _selectedIndex = index - 1;
+      _selectedIndex = _clips.length - 1;
       await _initPreview();
       setState(() {});
     }
@@ -341,7 +338,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                   selectedIndex: _selectedIndex,
                   onSelect: _onSelectClip,
                   onReorder: _reorderClips,
-                  onAppend: () => _addVideos(insertIndex: _clips.length),
+                  onAppend: _addVideos,
                   onRemove: _removeClip,
                 ),
                 SafeArea(
