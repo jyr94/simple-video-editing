@@ -6,7 +6,8 @@ import '../bloc/video_editor_bloc.dart';
 import '../bloc/video_editor_event.dart';
 import '../bloc/video_editor_state.dart';
 import '../widgets/video_preview.dart';
-import '../widgets/editing_controls.dart';
+import '../widgets/video_track.dart';
+import '../models/video_clip.dart';
 
 class VideoEditorPage extends StatelessWidget {
   const VideoEditorPage({super.key});
@@ -58,6 +59,12 @@ class VideoEditorPage extends StatelessWidget {
           }
 
           if (state is VideoLoaded) {
+            final clip = VideoClip(
+              duration: state.controller.videoDuration,
+              start: state.controller.startTrim,
+              end: state.controller.endTrim,
+            );
+
             return Column(
               children: [
                 Expanded(
@@ -72,7 +79,19 @@ class VideoEditorPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                EditingControls(controller: state.controller),
+                VideoTrack(
+                  clips: [clip],
+                  selectedIndex: 0,
+                  onSelect: (_) {},
+                  onReorder: (from, to) {},
+                  onAppend: () => _pickVideo(context),
+                  onRemove: (_) {},
+                  onTrim: (index, start, end) {
+                    context.read<VideoEditorBloc>().add(
+                          TrimVideo(start: start, end: end),
+                        );
+                  },
+                ),
               ],
             );
           }
