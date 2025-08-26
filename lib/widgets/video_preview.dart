@@ -13,13 +13,6 @@ class VideoPreview extends StatefulWidget {
 class _VideoPreviewState extends State<VideoPreview> {
   double _scale = 1.0;
 
-  String _format(Duration d) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    final minutes = two(d.inMinutes.remainder(60));
-    final seconds = two(d.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
-
   @override
   Widget build(BuildContext context) {
     final videoController = widget.controller.video;
@@ -87,33 +80,9 @@ class _VideoPreviewState extends State<VideoPreview> {
                       size: 64,
                     ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Column(
-                      children: [
-                        Slider(
-                          value: position.inMilliseconds.toDouble(),
-                          min: 0,
-                          max: duration.inMilliseconds.toDouble(),
-                          onChanged: (v) => videoController.seekTo(
-                            Duration(milliseconds: v.toInt()),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            '${_format(position)} / ${_format(duration)}',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                   if (showHandles) ...[
                     Positioned(
-                      bottom: 28,
+                      bottom: 0,
                       left: startPos - 2,
                       child: Container(
                         width: 4,
@@ -122,7 +91,7 @@ class _VideoPreviewState extends State<VideoPreview> {
                       ),
                     ),
                     Positioned(
-                      bottom: 28,
+                      bottom: 0,
                       left: endPos - 2,
                       child: Container(
                         width: 4,
