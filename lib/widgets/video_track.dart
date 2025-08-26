@@ -6,20 +6,20 @@ import 'timeline_clip.dart';
 class VideoTrack extends StatelessWidget {
   final List<VideoClip> clips;
   final int selectedIndex;
-  final ValueChanged<int>? onSelectClip;
-  final void Function(int from, int to)? onReorderClip;
-  final VoidCallback? onAppendClip;
-  final ValueChanged<int>? onRemoveClip;
+  final ValueChanged<int>? onSelect;
+  final void Function(int from, int to)? onReorder;
+  final VoidCallback? onAppend;
+  final ValueChanged<int>? onRemove;
   final double height;
 
   const VideoTrack({
     super.key,
     required this.clips,
     required this.selectedIndex,
-    this.onSelectClip,
-    this.onReorderClip,
-    this.onAppendClip,
-    this.onRemoveClip,
+    this.onSelect,
+    this.onReorder,
+    this.onAppend,
+    this.onRemove,
     this.height = 80,
   });
 
@@ -34,8 +34,8 @@ class VideoTrack extends StatelessWidget {
       ),
       childWhenDragging: const SizedBox(width: 116),
       child: GestureDetector(
-        onTap: () => onSelectClip?.call(index),
-        onDoubleTap: () => onRemoveClip?.call(index),
+        onTap: () => onSelect?.call(index),
+        onDoubleTap: () => onRemove?.call(index),
         child: TimelineClip(
           clip: clip,
           selected: selectedIndex == index,
@@ -47,7 +47,7 @@ class VideoTrack extends StatelessWidget {
   Widget _buildDragTarget(int index, Widget child) {
     return DragTarget<Map<String, int>>(
       onWillAccept: (from) => from!['index'] != index,
-      onAccept: (from) => onReorderClip?.call(from['index']!, index),
+      onAccept: (from) => onReorder?.call(from['index']!, index),
       builder: (context, candidate, rejected) => child,
     );
   }
@@ -64,7 +64,7 @@ class VideoTrack extends StatelessWidget {
             return _buildDragTarget(
               index,
               GestureDetector(
-                onTap: onAppendClip,
+                onTap: onAppend,
                 child: Container(
                   width: 100,
                   margin: const EdgeInsets.all(8),

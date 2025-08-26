@@ -339,10 +339,10 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                 VideoTrack(
                   clips: _clips,
                   selectedIndex: _selectedIndex,
-                  onSelectClip: _onSelectClip,
-                  onReorderClip: _reorderClips,
-                  onAppendClip: () => _addVideos(insertIndex: _clips.length),
-                  onRemoveClip: _removeClip,
+                  onSelect: _onSelectClip,
+                  onReorder: _reorderClips,
+                  onAppend: () => _addVideos(insertIndex: _clips.length),
+                  onRemove: _removeClip,
                 ),
                 SafeArea(
                   top: false,
