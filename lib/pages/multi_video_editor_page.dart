@@ -7,6 +7,9 @@ import 'package:video_player/video_player.dart';
 
 import '../models/video_clip.dart';
 
+const double _kSpacing = 12.0;
+const double _kRadius = 12.0;
+
 class MultiVideoEditorPage extends StatefulWidget {
   const MultiVideoEditorPage({super.key});
 
@@ -124,40 +127,56 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                     child: _previewController == null ||
                             !_previewController!.value.isInitialized
                         ? const Text('No clip selected')
-                        : AspectRatio(
-                            aspectRatio:
-                                _previewController!.value.aspectRatio,
-                            child: Stack(
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                VideoPlayer(_previewController!),
-                                VideoProgressIndicator(
-                                  _previewController!,
-                                  allowScrubbing: true,
-                                ),
-                                Positioned(
-                                  bottom: 8,
-                                  right: 8,
-                                  child: IconButton(
-                                    icon: Icon(
-                                      _previewController!
-                                              .value.isPlaying
-                                          ? Icons.pause
-                                          : Icons.play_arrow,
+                        : Padding(
+                            padding: const EdgeInsets.all(_kSpacing),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(_kRadius),
+                              child: AspectRatio(
+                                aspectRatio:
+                                    _previewController!.value.aspectRatio,
+                                child: Stack(
+                                  alignment: Alignment.bottomCenter,
+                                  children: [
+                                    VideoPlayer(_previewController!),
+                                    VideoProgressIndicator(
+                                      _previewController!,
+                                      allowScrubbing: true,
                                     ),
-                                    onPressed: () {
-                                      setState(() {
-                                        if (_previewController!
-                                            .value.isPlaying) {
-                                          _previewController!.pause();
-                                        } else {
-                                          _previewController!.play();
-                                        }
-                                      });
-                                    },
-                                  ),
+                                    Positioned(
+                                      bottom: _kSpacing,
+                                      right: _kSpacing,
+                                      child: IconButton(
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: Colors.black54,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                                    _kRadius),
+                                          ),
+                                        ),
+                                        icon: Icon(
+                                          _previewController!
+                                                  .value.isPlaying
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            if (_previewController!
+                                                .value.isPlaying) {
+                                              _previewController!
+                                                  .pause();
+                                            } else {
+                                              _previewController!
+                                                  .play();
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                   ),
@@ -165,6 +184,8 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                 SizedBox(
                   height: 120,
                   child: ReorderableListView.builder(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: _kSpacing),
                     scrollDirection: Axis.horizontal,
                     onReorder: (oldIndex, newIndex) {
                       setState(() {
@@ -203,15 +224,25 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                         },
                         child: Container(
                           width: 120,
-                          margin: const EdgeInsets.all(8),
-                          color: _selectedIndex == index
-                              ? Colors.teal
-                              : Colors.grey[800],
+                          margin: const EdgeInsets.all(_kSpacing),
+                          padding: const EdgeInsets.all(_kSpacing),
+                          decoration: BoxDecoration(
+                            color: _selectedIndex == index
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(_kRadius),
+                          ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('Clip ${index + 1}'),
+                              Text(
+                                'Clip ${index + 1}',
+                                style:
+                                    Theme.of(context).textTheme.bodyMedium,
+                              ),
                               DropdownButton<TransitionType>(
+                                dropdownColor:
+                                    Theme.of(context).colorScheme.surface,
                                 value: clip.transition,
                                 items: TransitionType.values
                                     .map(
@@ -235,7 +266,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                 ),
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(_kSpacing),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
