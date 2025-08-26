@@ -388,35 +388,35 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                         : VideoPreview(controller: _previewController!),
                   ),
                 ),
-                SizedBox(
-                  height: 80.0 * _tracks.length,
-                  child: Column(
-                    children: [
-                      for (var t = 0; t < _tracks.length; t++)
-                        SizedBox(
-                          height: 80,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _tracks[t].length + 1,
-                            itemBuilder: (context, index) {
-                              if (index == _tracks[t].length) {
-                                return _buildDragTarget(
-                                  t,
-                                  index,
-                                  const SizedBox(width: 116),
-                                );
-                              }
-                              return _buildDragTarget(
-                                t,
-                                index,
-                                _buildDraggableClip(t, index),
-                              );
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+                // SizedBox(
+                //   height: 80.0 * _tracks.length,
+                //   child: Column(
+                //     children: [
+                //       for (var t = 0; t < _tracks.length; t++)
+                //         SizedBox(
+                //           height: 80,
+                //           child: ListView.builder(
+                //             scrollDirection: Axis.horizontal,
+                //             itemCount: _tracks[t].length + 1,
+                //             itemBuilder: (context, index) {
+                //               if (index == _tracks[t].length) {
+                //                 return _buildDragTarget(
+                //                   t,
+                //                   index,
+                //                   const SizedBox(width: 116),
+                //                 );
+                //               }
+                //               return _buildDragTarget(
+                //                 t,
+                //                 index,
+                //                 _buildDraggableClip(t, index),
+                //               );
+                //             },
+                //           ),
+                //         ),
+                //     ],
+                //   ),
+                // ),
                 if (_previewController != null &&
                     _previewController!.initialized)
                   Padding(
