@@ -21,6 +21,14 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   bool _isExporting = false;
   VideoPlayerController? _previewController;
   int _selectedIndex = 0;
+  double _previewScale = 1.0;
+
+  String _format(Duration d) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    final minutes = two(d.inMinutes.remainder(60));
+    final seconds = two(d.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
 
   Future<void> _addVideos() async {
     final result = await FilePicker.platform.pickFiles(
@@ -258,41 +266,116 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                     child: _previewController == null ||
                             !_previewController!.value.isInitialized
                         ? const Text('No clip selected')
-                        : AspectRatio(
-                            aspectRatio:
-                                _previewController!.value.aspectRatio,
-                            child: Stack(
-                              alignment: Alignment.bottomCenter,
-                              children: [
-                                VideoPlayer(_previewController!),
-                                VideoProgressIndicator(
-                                  _previewController!,
-                                  allowScrubbing: true,
-                                ),
-                                Positioned(
-                                  bottom: 8,
-                                  right: 8,
-                                  child: IconButton(
-                                    icon: Icon(
-                                      _previewController!
-                                              .value.isPlaying
-                                          ? Icons.pause
-                                          : Icons.play_arrow,
-                                    ),
-                                    onPressed: () {
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              final controller = _previewController!;
+                              return ValueListenableBuilder<VideoPlayerValue>(
+                                valueListenable: controller,
+                                builder: (context, value, child) {
+                                  final duration = value.duration;
+                                  final position = value.position;
+                                  final width = constraints.maxWidth;
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      value.isPlaying
+                                          ? controller.pause()
+                                          : controller.play();
+                                    },
+                                    onHorizontalDragUpdate: (details) {
+                                      final relative = details.delta.dx / width;
+                                      final newPosition = position.inMilliseconds +
+                                          duration.inMilliseconds * relative;
+                                      final clamped = newPosition.clamp(
+                                        0,
+                                        duration.inMilliseconds.toDouble(),
+                                      );
+                                      controller.seekTo(
+                                        Duration(milliseconds: clamped.toInt()),
+                                      );
+                                    },
+                                    onScaleUpdate: (details) {
                                       setState(() {
-                                        if (_previewController!
-                                            .value.isPlaying) {
-                                          _previewController!.pause();
-                                        } else {
-                                          _previewController!.play();
-                                        }
+                                        _previewScale =
+                                            details.scale.clamp(1.0, 5.0);
                                       });
                                     },
-                                  ),
-                                ),
-                              ],
-                            ),
+                                    child: Stack(
+                                      children: [
+                                        Center(
+                                          child: AspectRatio(
+                                            aspectRatio: value.aspectRatio,
+                                            child: Transform.scale(
+                                              scale: _previewScale,
+                                              child: VideoPlayer(controller),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          bottom: 8,
+                                          left: 8,
+                                          child: Icon(
+                                            value.isPlaying
+                                                ? Icons.pause_circle
+                                                : Icons.play_circle,
+                                            size: 48,
+                                            color: Colors.white70,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          bottom: 0,
+                                          left: 0,
+                                          right: 0,
+                                          child: Column(
+                                            children: [
+                                              Slider(
+                                                value: position
+                                                    .inMilliseconds
+                                                    .toDouble(),
+                                                min: 0,
+                                                max: duration.inMilliseconds
+                                                    .toDouble(),
+                                                onChanged: (v) => controller
+                                                    .seekTo(Duration(
+                                                        milliseconds:
+                                                            v.toInt())),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 4),
+                                                child: Text(
+                                                  '${_format(position)} / ${_format(duration)}',
+                                                  style: const TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Positioned(
+                                          bottom: 28,
+                                          left: 0,
+                                          child: Container(
+                                            width: 4,
+                                            height: 20,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          bottom: 28,
+                                          right: 0,
+                                          child: Container(
+                                            width: 4,
+                                            height: 20,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           ),
                   ),
                 ),
