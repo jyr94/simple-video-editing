@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../models/video_clip.dart';
+import '../widgets/transition_selector.dart';
 
 class MultiVideoEditorPage extends StatefulWidget {
   const MultiVideoEditorPage({super.key});
@@ -187,9 +188,11 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
 
     for (var i = 1; i < _clips.length; i++) {
       final prev = _clips[i - 1];
-      if (prev.transition == TransitionType.fade) {
+      if (prev.transition != TransitionType.none) {
+        final transition =
+            prev.transition == TransitionType.fade ? 'fade' : 'slideleft';
         filter +=
-            '$currentV$currentA[$i:v][$i:a]xfade=transition=fade:duration=1:offset=${currentDur - 1}[v$i][a$i];';
+            '$currentV$currentA[$i:v][$i:a]xfade=transition=$transition:duration=1:offset=${currentDur - 1}[v$i][a$i];';
         currentV = '[v$i]';
         currentA = '[a$i]';
         currentDur += _clips[i].duration.inSeconds.toDouble() - 1;
@@ -278,10 +281,18 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     setState(() {});
   }
 
-  void _openTransitionSettings() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Transition settings coming soon')),
+  Future<void> _openTransitionSettings() async {
+    if (_clips.isEmpty) return;
+    final selected = await showModalBottomSheet<TransitionType>(
+      context: context,
+      builder: (context) =>
+          TransitionSelector(initial: _clips[_selectedIndex].transition),
     );
+    if (selected != null) {
+      setState(() {
+        _clips[_selectedIndex].transition = selected;
+      });
+    }
   }
 
   @override
