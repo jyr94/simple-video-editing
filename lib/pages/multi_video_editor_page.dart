@@ -215,10 +215,55 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     );
   }
 
-  void _splitClip() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Split feature coming soon')),
+  Future<void> _splitClip() async {
+    if (_clips.isEmpty || _previewController == null) return;
+    final clip = _clips[_selectedIndex];
+    final position = _previewController!.value.position;
+    if (position <= Duration.zero || position >= clip.duration) return;
+
+    final tmp = Directory.systemTemp.path;
+    final base = DateTime.now().millisecondsSinceEpoch;
+    final firstPath = '$tmp/split_${base}_1.mp4';
+    final secondPath = '$tmp/split_${base}_2.mp4';
+    final posSeconds = position.inMilliseconds / 1000.0;
+
+    final firstCmd =
+        "-i '${clip.path}' -t $posSeconds -c copy '$firstPath'";
+    final secondCmd =
+        "-i '${clip.path}' -ss $posSeconds -c copy '$secondPath'";
+
+    await FFmpegKit.execute(firstCmd);
+    await FFmpegKit.execute(secondCmd);
+
+    final thumb1 = await VideoThumbnail.thumbnailData(
+      video: firstPath,
+      imageFormat: ImageFormat.PNG,
+      maxWidth: 120,
+      quality: 75,
     );
+    final thumb2 = await VideoThumbnail.thumbnailData(
+      video: secondPath,
+      imageFormat: ImageFormat.PNG,
+      maxWidth: 120,
+      quality: 75,
+    );
+
+    final clip1 = VideoClip(
+      path: firstPath,
+      duration: position,
+      thumbnail: thumb1,
+    );
+    final clip2 = VideoClip(
+      path: secondPath,
+      duration: clip.duration - position,
+      thumbnail: thumb2,
+    );
+
+    setState(() {
+      _clips.removeAt(_selectedIndex);
+      _clips.insertAll(_selectedIndex, [clip1, clip2]);
+    });
+    await _initPreview();
   }
 
   Future<void> _deleteSelectedClip() async {
@@ -400,11 +445,32 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                 ),
                 SafeArea(
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
+                      if (_previewController != null &&
+                          _previewController!.value.isInitialized)
+                        Expanded(
+                          child: ValueListenableBuilder<VideoPlayerValue>(
+                            valueListenable: _previewController!,
+                            builder: (context, value, child) {
+                              final max =
+                                  value.duration.inMilliseconds.toDouble();
+                              final pos = value.position.inMilliseconds
+                                  .clamp(0.0, max)
+                                  .toDouble();
+                              return Slider(
+                                min: 0,
+                                max: max,
+                                value: pos,
+                                onChanged: (v) => _previewController!.seekTo(
+                                  Duration(milliseconds: v.toInt()),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       IconButton(
                         icon: const Icon(Icons.call_split),
-                        onPressed: _splitClip,
+                        onPressed: () => _splitClip(),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete),
