@@ -21,13 +21,12 @@ class MultiVideoEditorPage extends StatefulWidget {
 }
 
 class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
-  final List<List<VideoClip>> _tracks = [[]];
+  final List<VideoClip> _clips = [];
   bool _isExporting = false;
   VideoEditorController? _previewController;
-  int _selectedTrack = 0;
   int _selectedIndex = 0;
 
-  bool get _hasAnyClip => _tracks.any((t) => t.isNotEmpty);
+  bool get _hasAnyClip => _clips.isNotEmpty;
 
   Future<Uint8List?> _generateWaveform(String path) async {
     final wavePath =
@@ -48,12 +47,12 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       allowMultiple: true,
     );
     if (result != null) {
-      var insertIndex = _tracks[0].isEmpty ? 0 : 1;
+      var insertIndex = _clips.isEmpty ? 0 : _selectedIndex + 1;
       for (final file in result.files) {
         final controller = VideoPlayerController.file(File(file.path!));
         await controller.initialize();
         final wave = await _generateWaveform(file.path!);
-        _tracks[0].insert(
+        _clips.insert(
           insertIndex,
           VideoClip(
             path: file.path!,
@@ -65,34 +64,8 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
         insertIndex++;
         await controller.dispose();
       }
-      _selectedTrack = 0;
-      _selectedIndex = 0;
+      _selectedIndex = insertIndex - 1;
       await _initPreview();
-      setState(() {});
-    }
-  }
-
-  Future<void> _addAudio() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.audio,
-      allowMultiple: true,
-    );
-    if (result != null) {
-      if (_tracks.length < 2) _tracks.add([]);
-      for (final file in result.files) {
-        final controller = VideoPlayerController.file(File(file.path!));
-        await controller.initialize();
-        final wave = await _generateWaveform(file.path!);
-        _tracks[1].add(
-          VideoClip(
-            path: file.path!,
-            duration: controller.value.duration,
-            waveform: wave,
-            type: ClipType.audio,
-          ),
-        );
-        await controller.dispose();
-      }
       setState(() {});
     }
   }
@@ -119,8 +92,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       },
     );
     if (text != null && text.isNotEmpty) {
-      if (_tracks.length < 3) _tracks.add([]);
-      _tracks[2].add(
+      _clips.add(
         VideoClip(
           path: null,
           duration: const Duration(seconds: 3),
@@ -135,12 +107,8 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   Future<void> _initPreview() async {
     await _previewController?.dispose();
     _previewController = null;
-    if (!_hasAnyClip) return;
-    if (_selectedTrack >= _tracks.length ||
-        _tracks[_selectedTrack].isEmpty) {
-      return;
-    }
-    final clip = _tracks[_selectedTrack][_selectedIndex];
+    if (!_hasAnyClip || _selectedIndex >= _clips.length) return;
+    final clip = _clips[_selectedIndex];
     if (clip.type != ClipType.video || clip.path == null) {
       setState(() {});
       return;
@@ -173,16 +141,15 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     setState(() {});
   }
 
-  Future<void> _onSelectClip(int track, int index) async {
-    _selectedTrack = track;
+  Future<void> _onSelectClip(int index) async {
     _selectedIndex = index;
     await _initPreview();
   }
 
-  Widget _buildDraggableClip(int track, int index) {
-    final clip = _tracks[track][index];
+  Widget _buildDraggableClip(int index) {
+    final clip = _clips[index];
     return Draggable<Map<String, int>>(
-      data: {'track': track, 'index': index},
+      data: {'index': index},
       dragAnchorStrategy: pointerDragAnchorStrategy,
       feedback: Material(
         borderRadius: BorderRadius.circular(8),
@@ -190,41 +157,37 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       ),
       childWhenDragging: const SizedBox(width: 116),
       child: GestureDetector(
-        onTap: () => _onSelectClip(track, index),
+        onTap: () => _onSelectClip(index),
         onDoubleTap: () {
           setState(() {
-            _tracks[track].removeAt(index);
-            if (_tracks[track].isEmpty) {
+            _clips.removeAt(index);
+            if (_clips.isEmpty) {
               _selectedIndex = 0;
               _initPreview();
-            } else if (_selectedTrack == track &&
-                _selectedIndex >= _tracks[track].length) {
-              _selectedIndex = _tracks[track].length - 1;
+            } else if (_selectedIndex >= _clips.length) {
+              _selectedIndex = _clips.length - 1;
               _initPreview();
             }
           });
         },
         child: TimelineClip(
           clip: clip,
-          selected: _selectedTrack == track && _selectedIndex == index,
+          selected: _selectedIndex == index,
         ),
       ),
     );
   }
 
-  Widget _buildDragTarget(int track, int index, Widget child) {
+  Widget _buildDragTarget(int index, Widget child) {
     return DragTarget<Map<String, int>>(
-      onWillAccept: (from) =>
-          from!['track'] != track || from['index'] != index,
+      onWillAccept: (from) => from!['index'] != index,
       onAccept: (from) {
         setState(() {
-          final item = _tracks[from['track']!].removeAt(from['index']!);
+          final item = _clips.removeAt(from['index']!);
           var newIndex = index;
-          if (from['track'] == track && from['index']! < index) newIndex--;
-          _tracks[track].insert(newIndex, item);
-          if (_selectedTrack == from['track']! &&
-              _selectedIndex == from['index']!) {
-            _selectedTrack = track;
+          if (from['index']! < index) newIndex--;
+          _clips.insert(newIndex, item);
+          if (_selectedIndex == from['index']!) {
             _selectedIndex = newIndex;
             _initPreview();
           }
@@ -235,7 +198,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   }
 
   Future<void> _export() async {
-    final clips = _tracks[0];
+    final clips = _clips;
     if (clips.isEmpty || _isExporting) return;
     setState(() => _isExporting = true);
 
@@ -280,8 +243,8 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   }
 
   Future<void> _splitClip() async {
-    if (_tracks[_selectedTrack].isEmpty || _previewController == null) return;
-    final clip = _tracks[_selectedTrack][_selectedIndex];
+    if (_clips.isEmpty || _previewController == null) return;
+    final clip = _clips[_selectedIndex];
     if (clip.type != ClipType.video || clip.path == null) return;
     final position = _previewController!.video.value.position;
     if (position <= Duration.zero || position >= clip.duration) return;
@@ -317,27 +280,27 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     );
 
     setState(() {
-      _tracks[_selectedTrack].removeAt(_selectedIndex);
-      _tracks[_selectedTrack].insertAll(_selectedIndex, [clip1, clip2]);
+      _clips.removeAt(_selectedIndex);
+      _clips.insertAll(_selectedIndex, [clip1, clip2]);
     });
     await _initPreview();
   }
 
   Future<void> _deleteSelectedClip() async {
-    if (_tracks[_selectedTrack].isEmpty) return;
-    _tracks[_selectedTrack].removeAt(_selectedIndex);
-    if (_tracks[_selectedTrack].isEmpty) {
+    if (_clips.isEmpty) return;
+    _clips.removeAt(_selectedIndex);
+    if (_clips.isEmpty) {
       _selectedIndex = 0;
-    } else if (_selectedIndex >= _tracks[_selectedTrack].length) {
-      _selectedIndex = _tracks[_selectedTrack].length - 1;
+    } else if (_selectedIndex >= _clips.length) {
+      _selectedIndex = _clips.length - 1;
     }
     await _initPreview();
     setState(() {});
   }
 
   Future<void> _openTransitionSettings() async {
-    if (_tracks[_selectedTrack].isEmpty) return;
-    final clip = _tracks[_selectedTrack][_selectedIndex];
+    if (_clips.isEmpty) return;
+    final clip = _clips[_selectedIndex];
     if (clip.type != ClipType.video) return;
     final selected = await showModalBottomSheet<TransitionType>(
       context: context,
@@ -400,19 +363,17 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                   height: 80,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: _tracks.last.length + 1,
+                    itemCount: _clips.length + 1,
                     itemBuilder: (context, index) {
-                      if (index == _tracks.last.length) {
+                      if (index == _clips.length) {
                         return _buildDragTarget(
-                          _tracks.length - 1,
                           index,
                           const SizedBox(width: 116),
                         );
                       }
                       return _buildDragTarget(
-                        _tracks.length - 1,
                         index,
-                        _buildDraggableClip(_tracks.length - 1, index),
+                        _buildDraggableClip(index),
                       );
                     },
                   ),
@@ -450,7 +411,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                   top: false,
                   child: EditorToolbar(
                     onEdit: _splitClip,
-                    onAudio: _addAudio,
+                    onAudio: () => _showPlaceholder('Audio'),
                     onText: _addText,
                     onEffect: _openTransitionSettings,
                     onOverlay: () => _showPlaceholder('Overlay'),
