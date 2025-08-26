@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../models/video_clip.dart';
 
@@ -29,10 +31,17 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       for (final file in result.files) {
         final controller = VideoPlayerController.file(File(file.path!));
         await controller.initialize();
+        final Uint8List? thumb = await VideoThumbnail.thumbnailData(
+          video: file.path!,
+          imageFormat: ImageFormat.PNG,
+          maxWidth: 120,
+          quality: 75,
+        );
         _clips.add(
           VideoClip(
             path: file.path!,
             duration: controller.value.duration,
+            thumbnail: thumb,
           ),
         );
         await controller.dispose();
@@ -59,6 +68,101 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   Future<void> _onSelectClip(int index) async {
     _selectedIndex = index;
     await _initPreview();
+  }
+
+  String _formatDuration(Duration d) {
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  Widget _clipThumbnail(VideoClip clip, bool selected) {
+    return Container(
+      width: 100,
+      margin: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: selected ? Colors.teal : Colors.transparent,
+          width: 3,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          clip.thumbnail != null
+              ? Image.memory(clip.thumbnail!, fit: BoxFit.cover)
+              : Container(color: Colors.black),
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Container(
+              color: Colors.black54,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                _formatDuration(clip.duration),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDraggableClip(int index) {
+    final clip = _clips[index];
+    return LongPressDraggable<int>(
+      data: index,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: Material(
+        borderRadius: BorderRadius.circular(8),
+        child: _clipThumbnail(clip, true),
+      ),
+      childWhenDragging: const SizedBox(width: 116),
+      child: GestureDetector(
+        onTap: () => _onSelectClip(index),
+        onDoubleTap: () {
+          setState(() {
+            _clips.removeAt(index);
+            if (_clips.isEmpty) {
+              _selectedIndex = 0;
+              _initPreview();
+            } else if (_selectedIndex >= _clips.length) {
+              _selectedIndex = _clips.length - 1;
+              _initPreview();
+            }
+          });
+        },
+        child: _clipThumbnail(clip, _selectedIndex == index),
+      ),
+    );
+  }
+
+  Widget _buildDragTarget(int index, Widget child) {
+    return DragTarget<int>(
+      onWillAccept: (from) => from != index,
+      onAccept: (from) {
+        setState(() {
+          final item = _clips.removeAt(from);
+          var newIndex = index;
+          if (newIndex > from) newIndex--;
+          _clips.insert(newIndex, item);
+          if (_selectedIndex == from) {
+            _selectedIndex = newIndex;
+            _initPreview();
+          } else if (from < _selectedIndex && newIndex >= _selectedIndex) {
+            _selectedIndex--;
+          } else if (from > _selectedIndex && newIndex <= _selectedIndex) {
+            _selectedIndex++;
+          }
+        });
+      },
+      builder: (context, candidate, rejected) {
+        return child;
+      },
+    );
   }
 
   Future<void> _export() async {
@@ -164,71 +268,19 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                 ),
                 SizedBox(
                   height: 120,
-                  child: ReorderableListView.builder(
+                  child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    onReorder: (oldIndex, newIndex) {
-                      setState(() {
-                        if (newIndex > oldIndex) newIndex--;
-                        final item = _clips.removeAt(oldIndex);
-                        _clips.insert(newIndex, item);
-                        if (_selectedIndex == oldIndex) {
-                          _selectedIndex = newIndex;
-                          _initPreview();
-                        } else if (oldIndex < _selectedIndex &&
-                            newIndex > _selectedIndex) {
-                          _selectedIndex--;
-                        } else if (oldIndex > _selectedIndex &&
-                            newIndex <= _selectedIndex) {
-                          _selectedIndex++;
-                        }
-                      });
-                    },
-                    itemCount: _clips.length,
+                    itemCount: _clips.length + 1,
                     itemBuilder: (context, index) {
-                      final clip = _clips[index];
-                      return GestureDetector(
-                        key: ValueKey(clip.path),
-                        onTap: () => _onSelectClip(index),
-                        onLongPress: () {
-                          setState(() {
-                            _clips.removeAt(index);
-                            if (_clips.isEmpty) {
-                              _selectedIndex = 0;
-                              _initPreview();
-                            } else if (_selectedIndex >= _clips.length) {
-                              _selectedIndex = _clips.length - 1;
-                              _initPreview();
-                            }
-                          });
-                        },
-                        child: Container(
-                          width: 120,
-                          margin: const EdgeInsets.all(8),
-                          color: _selectedIndex == index
-                              ? Colors.teal
-                              : Colors.grey[800],
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('Clip ${index + 1}'),
-                              DropdownButton<TransitionType>(
-                                value: clip.transition,
-                                items: TransitionType.values
-                                    .map(
-                                      (t) => DropdownMenuItem(
-                                        value: t,
-                                        child: Text(t.name),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  setState(() => clip.transition = value);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
+                      if (index == _clips.length) {
+                        return _buildDragTarget(
+                          index,
+                          const SizedBox(width: 116),
+                        );
+                      }
+                      return _buildDragTarget(
+                        index,
+                        _buildDraggableClip(index),
                       );
                     },
                   ),
