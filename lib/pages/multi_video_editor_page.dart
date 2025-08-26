@@ -11,6 +11,7 @@ import '../models/video_clip.dart';
 import '../widgets/transition_selector.dart';
 import '../widgets/timeline_clip.dart';
 import '../widgets/video_preview.dart';
+import '../widgets/editor_toolbar.dart';
 
 class MultiVideoEditorPage extends StatefulWidget {
   const MultiVideoEditorPage({super.key});
@@ -350,6 +351,11 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     }
   }
 
+  void _showPlaceholder(String feature) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$feature not implemented')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -361,12 +367,14 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
             onPressed: _addVideos,
           ),
           IconButton(
-            icon: const Icon(Icons.audiotrack),
-            onPressed: _addAudio,
-          ),
-          IconButton(
-            icon: const Icon(Icons.text_fields),
-            onPressed: _addText,
+            icon: _isExporting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save_alt),
+            onPressed: _isExporting ? null : _export,
           ),
         ],
       ),
@@ -388,35 +396,43 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                         : VideoPreview(controller: _previewController!),
                   ),
                 ),
-                // SizedBox(
-                //   height: 80.0 * _tracks.length,
-                //   child: Column(
-                //     children: [
-                //       for (var t = 0; t < _tracks.length; t++)
-                //         SizedBox(
-                //           height: 80,
-                //           child: ListView.builder(
-                //             scrollDirection: Axis.horizontal,
-                //             itemCount: _tracks[t].length + 1,
-                //             itemBuilder: (context, index) {
-                //               if (index == _tracks[t].length) {
-                //                 return _buildDragTarget(
-                //                   t,
-                //                   index,
-                //                   const SizedBox(width: 116),
-                //                 );
-                //               }
-                //               return _buildDragTarget(
-                //                 t,
-                //                 index,
-                //                 _buildDraggableClip(t, index),
-                //               );
-                //             },
-                //           ),
-                //         ),
-                //     ],
-                //   ),
-                // ),
+                SizedBox(
+                  height: 80.0 * _tracks.length,
+                  child: Stack(
+                    children: [
+                      Column(
+                        children: [
+                          for (var t = 0; t < _tracks.length; t++)
+                            SizedBox(
+                              height: 80,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _tracks[t].length + 1,
+                                itemBuilder: (context, index) {
+                                  if (index == _tracks[t].length) {
+                                    return _buildDragTarget(
+                                      t,
+                                      index,
+                                      const SizedBox(width: 116),
+                                    );
+                                  }
+                                  return _buildDragTarget(
+                                    t,
+                                    index,
+                                    _buildDraggableClip(t, index),
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                      Align(
+                        alignment: Alignment.center,
+                        child: Container(width: 2, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
                 if (_previewController != null &&
                     _previewController!.initialized)
                   Padding(
@@ -427,57 +443,34 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                       height: 48,
                     ),
                   ),
-                SafeArea(
-                  child: Row(
-                    children: [
-                      if (_previewController != null &&
-                          _previewController!.initialized)
-                        Expanded(
-                          child: ValueListenableBuilder<VideoPlayerValue>(
-                            valueListenable: _previewController!.video,
-                            builder: (context, value, child) {
-                              final max =
-                                  value.duration.inMilliseconds.toDouble();
-                              final pos = value.position.inMilliseconds
-                                  .clamp(0.0, max)
-                                  .toDouble();
-                              return Slider(
-                                min: 0,
-                                max: max,
-                                value: pos,
-                                onChanged: (v) => _previewController!.video
-                                    .seekTo(
-                                      Duration(milliseconds: v.toInt()),
-                                    ),
-                              );
-                            },
-                          ),
+                if (_previewController != null &&
+                    _previewController!.initialized)
+                  ValueListenableBuilder<VideoPlayerValue>(
+                    valueListenable: _previewController!.video,
+                    builder: (context, value, child) {
+                      final max = value.duration.inMilliseconds.toDouble();
+                      final pos = value.position.inMilliseconds
+                          .clamp(0.0, max)
+                          .toDouble();
+                      return Slider(
+                        min: 0,
+                        max: max,
+                        value: pos,
+                        onChanged: (v) => _previewController!.video.seekTo(
+                          Duration(milliseconds: v.toInt()),
                         ),
-                      IconButton(
-                        icon: const Icon(Icons.call_split),
-                        onPressed: () => _splitClip(),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: _deleteSelectedClip,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.tune),
-                        onPressed: _openTransitionSettings,
-                      ),
-                      IconButton(
-                        icon: _isExporting
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.save_alt),
-                        onPressed: _isExporting ? null : _export,
-                      ),
-                    ],
+                      );
+                    },
+                  ),
+                SafeArea(
+                  top: false,
+                  child: EditorToolbar(
+                    onEdit: _splitClip,
+                    onAudio: _addAudio,
+                    onText: _addText,
+                    onEffect: _openTransitionSettings,
+                    onOverlay: () => _showPlaceholder('Overlay'),
+                    onCaption: () => _showPlaceholder('Keterangan'),
                   ),
                 ),
               ],
