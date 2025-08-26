@@ -147,7 +147,10 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                                       right: _kSpacing,
                                       child: IconButton(
                                         style: IconButton.styleFrom(
-                                          backgroundColor: Colors.black54,
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .surface
+                                              .withOpacity(0.7),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
                                                 BorderRadius.circular(
@@ -244,6 +247,8 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                                 dropdownColor:
                                     Theme.of(context).colorScheme.surface,
                                 value: clip.transition,
+                                style:
+                                    Theme.of(context).textTheme.bodyMedium,
                                 items: TransitionType.values
                                     .map(
                                       (t) => DropdownMenuItem(
