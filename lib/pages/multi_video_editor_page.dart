@@ -397,40 +397,24 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                   ),
                 ),
                 SizedBox(
-                  height: 80.0 * _tracks.length,
-                  child: Stack(
-                    children: [
-                      Column(
-                        children: [
-                          for (var t = 0; t < _tracks.length; t++)
-                            SizedBox(
-                              height: 80,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: _tracks[t].length + 1,
-                                itemBuilder: (context, index) {
-                                  if (index == _tracks[t].length) {
-                                    return _buildDragTarget(
-                                      t,
-                                      index,
-                                      const SizedBox(width: 116),
-                                    );
-                                  }
-                                  return _buildDragTarget(
-                                    t,
-                                    index,
-                                    _buildDraggableClip(t, index),
-                                  );
-                                },
-                              ),
-                            ),
-                        ],
-                      ),
-                      Align(
-                        alignment: Alignment.center,
-                        child: Container(width: 2, color: Colors.white70),
-                      ),
-                    ],
+                  height: 80,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _tracks.last.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == _tracks.last.length) {
+                        return _buildDragTarget(
+                          _tracks.length - 1,
+                          index,
+                          const SizedBox(width: 116),
+                        );
+                      }
+                      return _buildDragTarget(
+                        _tracks.length - 1,
+                        index,
+                        _buildDraggableClip(_tracks.length - 1, index),
+                      );
+                    },
                   ),
                 ),
                 if (_previewController != null &&
