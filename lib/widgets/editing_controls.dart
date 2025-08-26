@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:video_editor/video_editor.dart';
+import 'package:video_editor/video_editor.dart' show VideoEditorController;
 import 'package:video_player/video_player.dart';
 
 import '../bloc/video_editor_bloc.dart';
@@ -48,14 +48,7 @@ class EditingControls extends StatelessWidget {
               },
             ),
 
-            // Slider trim bawaan package
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: TrimSlider(
-                controller: controller,
-                height: 48,
-              ),
-            ),
+            const SizedBox(height: 12),
 
             // Info kecil
             Padding(
