@@ -4,16 +4,24 @@ import 'package:flutter/foundation.dart';
 
 enum TransitionType { none, fade, slide }
 
+enum ClipType { video, audio, text }
+
 class VideoClip {
-  final String path;
+  final String? path;
   final Duration duration;
   final Uint8List? thumbnail;
+  final Uint8List? waveform;
+  final ClipType type;
+  final String? text;
   TransitionType transition;
 
   VideoClip({
-    required this.path,
+    this.path,
     required this.duration,
     this.thumbnail,
+    this.waveform,
+    this.type = ClipType.video,
+    this.text,
     this.transition = TransitionType.none,
   });
 }
