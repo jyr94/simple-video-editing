@@ -378,35 +378,6 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                     },
                   ),
                 ),
-                if (_previewController != null &&
-                    _previewController!.initialized)
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: TrimSlider(
-                      controller: _previewController!,
-                      height: 48,
-                    ),
-                  ),
-                if (_previewController != null &&
-                    _previewController!.initialized)
-                  ValueListenableBuilder<VideoPlayerValue>(
-                    valueListenable: _previewController!.video,
-                    builder: (context, value, child) {
-                      final max = value.duration.inMilliseconds.toDouble();
-                      final pos = value.position.inMilliseconds
-                          .clamp(0.0, max)
-                          .toDouble();
-                      return Slider(
-                        min: 0,
-                        max: max,
-                        value: pos,
-                        onChanged: (v) => _previewController!.video.seekTo(
-                          Duration(milliseconds: v.toInt()),
-                        ),
-                      );
-                    },
-                  ),
                 SafeArea(
                   top: false,
                   child: EditorToolbar(
