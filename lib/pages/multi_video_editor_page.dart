@@ -9,9 +9,9 @@ import 'package:video_player/video_player.dart';
 
 import '../models/video_clip.dart';
 import '../widgets/transition_selector.dart';
-import '../widgets/timeline_clip.dart';
 import '../widgets/video_preview.dart';
 import '../widgets/editor_toolbar.dart';
+import '../widgets/video_track.dart';
 
 class MultiVideoEditorPage extends StatefulWidget {
   const MultiVideoEditorPage({super.key});
@@ -41,19 +41,19 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     return null;
   }
 
-  Future<void> _addVideos() async {
+  Future<void> _addVideos({int? insertIndex}) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.video,
       allowMultiple: true,
     );
     if (result != null) {
-      var insertIndex = _clips.isEmpty ? 0 : _selectedIndex + 1;
+      var index = insertIndex ?? (_clips.isEmpty ? 0 : _selectedIndex + 1);
       for (final file in result.files) {
         final controller = VideoPlayerController.file(File(file.path!));
         await controller.initialize();
         final wave = await _generateWaveform(file.path!);
         _clips.insert(
-          insertIndex,
+          index,
           VideoClip(
             path: file.path!,
             duration: controller.value.duration,
@@ -61,10 +61,10 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
             type: ClipType.video,
           ),
         );
-        insertIndex++;
+        index++;
         await controller.dispose();
       }
-      _selectedIndex = insertIndex - 1;
+      _selectedIndex = index - 1;
       await _initPreview();
       setState(() {});
     }
@@ -146,55 +146,32 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     await _initPreview();
   }
 
-  Widget _buildDraggableClip(int index) {
-    final clip = _clips[index];
-    return Draggable<Map<String, int>>(
-      data: {'index': index},
-      dragAnchorStrategy: pointerDragAnchorStrategy,
-      feedback: Material(
-        borderRadius: BorderRadius.circular(8),
-        child: TimelineClip(clip: clip, selected: true),
-      ),
-      childWhenDragging: const SizedBox(width: 116),
-      child: GestureDetector(
-        onTap: () => _onSelectClip(index),
-        onDoubleTap: () {
-          setState(() {
-            _clips.removeAt(index);
-            if (_clips.isEmpty) {
-              _selectedIndex = 0;
-              _initPreview();
-            } else if (_selectedIndex >= _clips.length) {
-              _selectedIndex = _clips.length - 1;
-              _initPreview();
-            }
-          });
-        },
-        child: TimelineClip(
-          clip: clip,
-          selected: _selectedIndex == index,
-        ),
-      ),
-    );
+  void _removeClip(int index) {
+    setState(() {
+      _clips.removeAt(index);
+      if (_clips.isEmpty) {
+        _selectedIndex = 0;
+        _initPreview();
+      } else if (_selectedIndex >= _clips.length) {
+        _selectedIndex = _clips.length - 1;
+        _initPreview();
+      } else if (_selectedIndex == index) {
+        _initPreview();
+      }
+    });
   }
 
-  Widget _buildDragTarget(int index, Widget child) {
-    return DragTarget<Map<String, int>>(
-      onWillAccept: (from) => from!['index'] != index,
-      onAccept: (from) {
-        setState(() {
-          final item = _clips.removeAt(from['index']!);
-          var newIndex = index;
-          if (from['index']! < index) newIndex--;
-          _clips.insert(newIndex, item);
-          if (_selectedIndex == from['index']!) {
-            _selectedIndex = newIndex;
-            _initPreview();
-          }
-        });
-      },
-      builder: (context, candidate, rejected) => child,
-    );
+  void _reorderClips(int from, int to) {
+    setState(() {
+      final item = _clips.removeAt(from);
+      var newIndex = to;
+      if (from < to) newIndex--;
+      _clips.insert(newIndex, item);
+      if (_selectedIndex == from) {
+        _selectedIndex = newIndex;
+        _initPreview();
+      }
+    });
   }
 
   Future<void> _export() async {
@@ -327,7 +304,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.video_library),
-            onPressed: _addVideos,
+            onPressed: () => _addVideos(),
           ),
           IconButton(
             icon: _isExporting
@@ -344,7 +321,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       body: !_hasAnyClip
           ? Center(
               child: ElevatedButton.icon(
-                onPressed: _addVideos,
+                onPressed: () => _addVideos(),
                 icon: const Icon(Icons.video_library),
                 label: const Text('Add Videos'),
               ),
@@ -359,24 +336,13 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                         : VideoPreview(controller: _previewController!),
                   ),
                 ),
-                SizedBox(
-                  height: 80,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _clips.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == _clips.length) {
-                        return _buildDragTarget(
-                          index,
-                          const SizedBox(width: 116),
-                        );
-                      }
-                      return _buildDragTarget(
-                        index,
-                        _buildDraggableClip(index),
-                      );
-                    },
-                  ),
+                VideoTrack(
+                  clips: _clips,
+                  selectedIndex: _selectedIndex,
+                  onSelectClip: _onSelectClip,
+                  onReorderClip: _reorderClips,
+                  onAppendClip: () => _addVideos(insertIndex: _clips.length),
+                  onRemoveClip: _removeClip,
                 ),
                 SafeArea(
                   top: false,
