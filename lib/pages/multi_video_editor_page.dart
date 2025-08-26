@@ -42,6 +42,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
       }
       _selectedIndex = 0;
       await _initPreview();
+      if (!mounted) return;
       setState(() {});
     }
   }
@@ -56,6 +57,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     final clip = _clips[_selectedIndex];
     _previewController = VideoPlayerController.file(File(clip.path));
     await _previewController!.initialize();
+    if (!mounted) return;
     setState(() {});
   }
 
