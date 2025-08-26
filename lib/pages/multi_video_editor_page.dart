@@ -207,11 +207,41 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     );
   }
 
+  void _splitClip() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Split feature coming soon')),
+    );
+  }
+
+  Future<void> _deleteSelectedClip() async {
+    if (_clips.isEmpty) return;
+    _clips.removeAt(_selectedIndex);
+    if (_clips.isEmpty) {
+      _selectedIndex = 0;
+    } else if (_selectedIndex >= _clips.length) {
+      _selectedIndex = _clips.length - 1;
+    }
+    await _initPreview();
+    setState(() {});
+  }
+
+  void _openTransitionSettings() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Transition settings coming soon')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Video Editor'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _addVideos,
+          ),
+        ],
       ),
       body: _clips.isEmpty
           ? Center(
@@ -286,31 +316,34 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                   ),
                 ),
                 SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: _addVideos,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Videos'),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: _export,
-                          icon: _isExporting
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.save_alt),
-                          label: const Text('Export'),
-                        ),
-                      ],
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.call_split),
+                        onPressed: _splitClip,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: _deleteSelectedClip,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.tune),
+                        onPressed: _openTransitionSettings,
+                      ),
+                      IconButton(
+                        icon: _isExporting
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.save_alt),
+                        onPressed: _isExporting ? null : _export,
+                      ),
+                    ],
                   ),
                 ),
               ],
