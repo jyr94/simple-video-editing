@@ -10,6 +10,7 @@ class VideoTrack extends StatelessWidget {
   final void Function(int from, int to)? onReorder;
   final VoidCallback? onAppend;
   final ValueChanged<int>? onRemove;
+  final void Function(int index, Duration newStart, Duration newEnd)? onTrim;
   final double height;
 
   const VideoTrack({
@@ -20,12 +21,13 @@ class VideoTrack extends StatelessWidget {
     this.onReorder,
     this.onAppend,
     this.onRemove,
+    this.onTrim,
     this.height = 80,
   });
 
   Widget _buildDraggableClip(BuildContext context, int index) {
     final clip = clips[index];
-    return Draggable<Map<String, int>>(
+    return LongPressDraggable<Map<String, int>>(
       data: {'index': index},
       dragAnchorStrategy: pointerDragAnchorStrategy,
       feedback: Material(
@@ -39,6 +41,7 @@ class VideoTrack extends StatelessWidget {
         child: TimelineClip(
           clip: clip,
           selected: selectedIndex == index,
+          onTrim: (s, e) => onTrim?.call(index, s, e),
         ),
       ),
     );

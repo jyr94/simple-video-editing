@@ -5,8 +5,14 @@ import '../models/video_clip.dart';
 class TimelineClip extends StatelessWidget {
   final VideoClip clip;
   final bool selected;
+  final void Function(Duration newStart, Duration newEnd)? onTrim;
 
-  const TimelineClip({super.key, required this.clip, this.selected = false});
+  const TimelineClip({
+    super.key,
+    required this.clip,
+    this.selected = false,
+    this.onTrim,
+  });
 
   String _formatDuration(Duration d) {
     final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
@@ -16,8 +22,9 @@ class TimelineClip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double width = 100;
     return Container(
-      width: 100,
+      width: width,
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(
@@ -49,6 +56,57 @@ class TimelineClip extends StatelessWidget {
                 width: double.infinity,
               ),
             ),
+          if (selected)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onPanUpdate: (details) {
+                  final totalMs = clip.duration.inMilliseconds;
+                  final deltaMs =
+                      (details.delta.dx / width * totalMs).round();
+                  var newStart = clip.start.inMilliseconds + deltaMs;
+                  newStart = newStart.clamp(0, clip.end.inMilliseconds - 1) as int;
+                  onTrim?.call(
+                    Duration(milliseconds: newStart),
+                    clip.end,
+                  );
+                },
+                child: Container(
+                  width: 8,
+                  color: Colors.black38,
+                ),
+              ),
+            ),
+          if (selected)
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onPanUpdate: (details) {
+                  final totalMs = clip.duration.inMilliseconds;
+                  final deltaMs =
+                      (details.delta.dx / width * totalMs).round();
+                  var newEnd = clip.end.inMilliseconds + deltaMs;
+                  newEnd = newEnd.clamp(
+                    clip.start.inMilliseconds + 1,
+                    clip.duration.inMilliseconds,
+                  ) as int;
+                  onTrim?.call(
+                    clip.start,
+                    Duration(milliseconds: newEnd),
+                  );
+                },
+                child: Container(
+                  width: 8,
+                  color: Colors.black38,
+                ),
+              ),
+            ),
           Positioned(
             bottom: 4,
             right: 4,
@@ -56,7 +114,7 @@ class TimelineClip extends StatelessWidget {
               color: Colors.black54,
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Text(
-                _formatDuration(clip.duration),
+                _formatDuration(clip.end - clip.start),
                 style: const TextStyle(fontSize: 12),
               ),
             ),

@@ -171,6 +171,20 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     });
   }
 
+  void _trimClip(int index, Duration newStart, Duration newEnd) {
+    final clip = _clips[index];
+    setState(() {
+      clip.start = newStart;
+      clip.end = newEnd;
+    });
+    if (index == _selectedIndex && _previewController != null) {
+      _previewController!.updateTrim(
+        newStart.inMilliseconds / clip.duration.inMilliseconds,
+        newEnd.inMilliseconds / clip.duration.inMilliseconds,
+      );
+    }
+  }
+
   Future<void> _export() async {
     final clips = _clips;
     if (clips.isEmpty || _isExporting) return;
@@ -340,6 +354,7 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
                   onReorder: _reorderClips,
                   onAppend: _addVideos,
                   onRemove: _removeClip,
+                  onTrim: _trimClip,
                 ),
                 SafeArea(
                   top: false,
