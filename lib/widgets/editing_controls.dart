@@ -48,6 +48,17 @@ class EditingControls extends StatelessWidget {
               },
             ),
 
+            // Display current playback position instead of a slider
+            ValueListenableBuilder<VideoPlayerValue>(
+              valueListenable: controller.video,
+              builder: (context, value, child) {
+                return Text(
+                  'Position: ${value.position.inSeconds}s',
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
+                );
+              },
+            ),
+
             const SizedBox(height: 12),
 
             // Info kecil
