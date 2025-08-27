@@ -9,5 +9,9 @@ void main() {
 
     expect(find.text('Add Videos'), findsOneWidget);
     expect(find.byIcon(Icons.video_library), findsOneWidget);
+    expect(find.byIcon(Icons.delete_forever), findsOneWidget);
+    final deleteButton =
+        tester.widget<IconButton>(find.byIcon(Icons.delete_forever));
+    expect(deleteButton.onPressed, isNull);
   });
 }

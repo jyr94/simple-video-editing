@@ -286,6 +286,33 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     setState(() {});
   }
 
+  Future<void> _clearAllClips() async {
+    if (!_hasAnyClip) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear all clips?'),
+        content: const Text('This will remove all clips from the timeline.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      _clips.clear();
+      _selectedIndex = 0;
+      await _initPreview();
+      setState(() {});
+    }
+  }
+
   Future<void> _openTransitionSettings() async {
     if (_clips.isEmpty) return;
     final clip = _clips[_selectedIndex];
@@ -316,6 +343,11 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
           IconButton(
             icon: const Icon(Icons.video_library),
             onPressed: () => _addVideos(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            tooltip: 'Clear all',
+            onPressed: _hasAnyClip ? _clearAllClips : null,
           ),
           IconButton(
             icon: _isExporting
