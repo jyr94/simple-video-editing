@@ -13,11 +13,19 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Simple Video Editor',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.dark,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F0F0F),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF21CFF3),
+          secondary: Color(0xFF21CFF3),
+          background: Color(0xFF0F0F0F),
+          surface: Color(0xFF161616),
         ),
-        scaffoldBackgroundColor: Colors.black,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF0F0F0F),
+          elevation: 0,
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         useMaterial3: true,
       ),
       home: const MultiVideoEditorPage(),

@@ -73,9 +73,9 @@ class VideoTrack extends StatelessWidget {
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey.shade300,
+                    color: const Color(0xFF2A2A2A),
                   ),
-                  child: const Icon(Icons.add),
+                  child: const Icon(Icons.add, color: Colors.white),
                 ),
               ),
             );
