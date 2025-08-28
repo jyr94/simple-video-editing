@@ -57,8 +57,9 @@ class VideoTrack extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       height: height,
+      color: Colors.grey.shade900,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: clips.length + 1,
@@ -73,9 +74,9 @@ class VideoTrack extends StatelessWidget {
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey.shade300,
+                    color: Colors.grey.shade800,
                   ),
-                  child: const Icon(Icons.add),
+                  child: const Icon(Icons.add, color: Colors.white),
                 ),
               ),
             );

@@ -12,6 +12,7 @@ import '../widgets/transition_selector.dart';
 import '../widgets/video_preview.dart';
 import '../widgets/editor_toolbar.dart';
 import '../widgets/video_track.dart';
+import '../widgets/editor_app_bar.dart';
 
 class MultiVideoEditorPage extends StatefulWidget {
   const MultiVideoEditorPage({super.key});
@@ -286,6 +287,33 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
     setState(() {});
   }
 
+  Future<void> _clearAllClips() async {
+    if (!_hasAnyClip) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear all clips?'),
+        content: const Text('This will remove all clips from the timeline.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      _clips.clear();
+      _selectedIndex = 0;
+      await _initPreview();
+      setState(() {});
+    }
+  }
+
   Future<void> _openTransitionSettings() async {
     if (_clips.isEmpty) return;
     final clip = _clips[_selectedIndex];
@@ -310,28 +338,20 @@ class _MultiVideoEditorPageState extends State<MultiVideoEditorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Video Editor'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.video_library),
-            onPressed: () => _addVideos(),
-          ),
-          IconButton(
-            icon: _isExporting
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_alt),
-            onPressed: _isExporting ? null : _export,
-          ),
-        ],
+      appBar: EditorAppBar(
+        onAdd: _addVideos,
+        onExport: _export,
+        onClear: _clearAllClips,
+        hasClips: _hasAnyClip,
+        isExporting: _isExporting,
       ),
       body: !_hasAnyClip
           ? Center(
-              child: ElevatedButton.icon(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                ),
                 onPressed: () => _addVideos(),
                 icon: const Icon(Icons.video_library),
                 label: const Text('Add Videos'),

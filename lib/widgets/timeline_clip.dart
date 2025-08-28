@@ -28,8 +28,8 @@ class TimelineClip extends StatelessWidget {
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(
-          color: selected ? Colors.teal : Colors.transparent,
-          width: 3,
+          color: selected ? Colors.white : Colors.transparent,
+          width: 2,
         ),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -76,7 +76,7 @@ class TimelineClip extends StatelessWidget {
                 },
                 child: Container(
                   width: 8,
-                  color: Colors.black38,
+                  color: Colors.white24,
                 ),
               ),
             ),
@@ -103,7 +103,7 @@ class TimelineClip extends StatelessWidget {
                 },
                 child: Container(
                   width: 8,
-                  color: Colors.black38,
+                  color: Colors.white24,
                 ),
               ),
             ),
@@ -115,7 +115,7 @@ class TimelineClip extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               child: Text(
                 _formatDuration(clip.end - clip.start),
-                style: const TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 12, color: Colors.white),
               ),
             ),
           ),
