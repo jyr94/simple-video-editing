@@ -28,7 +28,9 @@ class TimelineClip extends StatelessWidget {
       margin: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         border: Border.all(
-          color: selected ? Colors.teal : Colors.transparent,
+          color: selected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
           width: 3,
         ),
         borderRadius: BorderRadius.circular(8),
